@@ -157,6 +157,14 @@
 
   <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // Verify Three.js loaded
+    if (typeof THREE === 'undefined') {
+      document.body.innerHTML = '<div style="color:white;padding:40px;text-align:center;font-family:sans-serif;"><h1>⚠️ Error Loading Three.js</h1><p>Please check your internet connection and refresh the page.</p></div>';
+      throw new Error('Three.js failed to load');
+    }
+    console.log('✅ Three.js loaded successfully');
+  </script>
   <script src="js/data/blocks.js"></script>
   <script src="js/data/recipes.js"></script>
   <script src="js/engine/noise.js"></script>
