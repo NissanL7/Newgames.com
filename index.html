@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>VoxelCraft - 3D Block Game</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Main Menu -->
+  <div id="main-menu" class="menu-screen">
+    <div class="menu-content">
+      <h1 class="game-title">⛏️ VoxelCraft</h1>
+      <p class="subtitle">3D Block Adventure</p>
+      <div class="menu-buttons">
+        <button id="btn-play" class="menu-btn primary">▶ Play</button>
+        <button id="btn-worlds" class="menu-btn">🌍 Worlds</button>
+        <button id="btn-controls" class="menu-btn">🎮 Controls</button>
+      </div>
+      <p class="version">v1.0 | WebGL 3D Voxel Engine</p>
+    </div>
+  </div>
+
+  <!-- World Menu -->
+  <div id="world-menu" class="menu-screen" style="display:none;">
+    <div class="menu-content">
+      <h2>🌍 World Selection</h2>
+      <div id="world-list" class="world-list"></div>
+      <div class="menu-buttons">
+        <button id="btn-new-world" class="menu-btn primary">+ New World</button>
+        <button id="worlds-back" class="menu-btn">← Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New World Panel -->
+  <div id="new-world-panel" class="menu-screen" style="display:none;">
+    <div class="menu-content small-panel">
+      <h2>Create New World</h2>
+      <div class="form-group">
+        <label>World Name</label>
+        <input type="text" id="world-name-input" placeholder="My World" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label>World Type</label>
+        <select id="world-type-select">
+          <option value="normal">🌲 Normal</option>
+          <option value="flat">🟩 Superflat</option>
+          <option value="mountains">⛰️ Mountains</option>
+          <option value="desert">🏜️ Desert</option>
+          <option value="snow">❄️ Snowy</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Seed (leave empty for random)</label>
+        <input type="number" id="world-seed-input" placeholder="Random">
+      </div>
+      <div class="menu-buttons">
+        <button id="create-world-btn" class="menu-btn primary">Create & Play</button>
+        <button id="cancel-world-btn" class="menu-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Panel -->
+  <div id="controls-panel" class="menu-screen" style="display:none;">
+    <div class="menu-content">
+      <h2>🎮 Controls</h2>
+      <div class="controls-grid">
+        <div class="control-section">
+          <h3>🖥️ Desktop</h3>
+          <p><b>WASD</b> - Move</p>
+          <p><b>Mouse</b> - Look around</p>
+          <p><b>Space</b> - Jump</p>
+          <p><b>F</b> - Toggle fly mode</p>
+          <p><b>E</b> - Inventory</p>
+          <p><b>C</b> - Crafting</p>
+          <p><b>Q</b> - Drop item</p>
+          <p><b>1-9</b> - Select hotbar slot</p>
+          <p><b>Left Click</b> - Break block</p>
+          <p><b>Right Click</b> - Place block</p>
+          <p><b>Scroll</b> - Change hotbar</p>
+          <p><b>F3</b> - Debug menu</p>
+          <p><b>Esc</b> - Save & Quit</p>
+        </div>
+        <div class="control-section">
+          <h3>📱 Mobile</h3>
+          <p><b>Left Joystick</b> - Move</p>
+          <p><b>Right Side</b> - Look around</p>
+          <p><b>Jump Button</b> - Jump</p>
+          <p><b>⛏️ Button</b> - Break block</p>
+          <p><b>📦 Button</b> - Place block</p>
+          <p><b>🎒 Button</b> - Inventory</p>
+        </div>
+      </div>
+      <button id="controls-back" class="menu-btn">← Back</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="menu-screen">
+    <div class="menu-content">
+      <h2>⏳ Generating World...</h2>
+      <div class="loading-bar">
+        <div class="loading-fill"></div>
+      </div>
+      <p>Building terrain, planting trees...</p>
+    </div>
+  </div>
+
+  <!-- Game Container -->
+  <div id="game-container" style="display:none;">
+    <div id="game-canvas"></div>
+
+    <!-- HUD -->
+    <div id="crosshair">+</div>
+    <div id="hotbar"></div>
+    <div id="block-info"></div>
+    <div id="message"></div>
+
+    <!-- Debug Panel -->
+    <div id="debug-panel" style="display:none;"></div>
+
+    <!-- Inventory Panel -->
+    <div id="inventory-panel" style="display:none;"></div>
+
+    <!-- Crafting Panel -->
+    <div id="crafting-panel" style="display:none;"></div>
+
+    <!-- Quit Menu -->
+    <div id="quit-menu" class="menu-overlay" style="display:none;">
+      <div class="menu-content small-panel">
+        <h2>Game Paused</h2>
+        <div class="menu-buttons">
+          <button class="menu-btn" onclick="if(game){game.showQuitMenu=false;document.getElementById('quit-menu').style.display='none';}">Resume</button>
+          <button class="menu-btn primary" onclick="if(game){game.saveAndQuit();}">Save & Quit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls" style="display:none;">
+      <div id="move-zone" class="touch-zone left-zone">
+        <div id="move-base" class="joystick-base">
+          <div id="move-knob" class="joystick-knob"></div>
+        </div>
+      </div>
+      <div id="look-zone" class="touch-zone right-zone"></div>
+      <div id="action-buttons">
+        <button id="jump-btn" class="action-btn">⬆️</button>
+        <button id="break-btn" class="action-btn">⛏️</button>
+        <button id="place-btn" class="action-btn">📦</button>
+        <button id="inventory-btn" class="action-btn">🎒</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/data/blocks.js"></script>
+  <script src="js/data/recipes.js"></script>
+  <script src="js/engine/noise.js"></script>
+  <script src="js/engine/textures.js"></script>
+  <script src="js/engine/chunk.js"></script>
+  <script src="js/engine/player.js"></script>
+  <script src="js/engine/inventory.js"></script>
+  <script src="js/ui/joystick.js"></script>
+  <script src="js/ui/hud.js"></script>
+  <script src="js/ui/crafting.js"></script>
+  <script src="js/ui/debug.js"></script>
+  <script src="js/systems/save.js"></script>
+  <script src="js/systems/worlds.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
