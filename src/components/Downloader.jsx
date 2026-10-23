@@ -11,6 +11,7 @@ import {
 
 const initialFormat = 'mp4';
 const initialQuality = '1080p';
+const REFERENCE_DOWNLOADER_URL = 'https://ssyou.online/en1401Yd/';
 
 export default function Downloader() {
   const [url, setUrl] = useState('');
@@ -116,6 +117,17 @@ export default function Downloader() {
     } catch {
       setNotice('Copy was blocked by your browser. Select the link from the input instead.');
     }
+  };
+
+  const handleReferenceCopy = () => {
+    if (!media) return;
+    const copied = () => setNotice('Reference opened. Link copied—paste it there, then choose MP4 and 1080p.');
+    const copyFailed = () => setNotice('Reference opened. Copy the link above and paste it there.');
+    if (!navigator.clipboard?.writeText) {
+      copyFailed();
+      return;
+    }
+    navigator.clipboard.writeText(media.url).then(copied).catch(copyFailed);
   };
 
   const handleDownload = async () => {
@@ -278,7 +290,20 @@ export default function Downloader() {
             {media.kind === 'youtube' && !media.serviceConnected && (
               <div className="service-note">
                 <Info size={18} />
-                <p><strong>{media.serviceError ? 'Download service unavailable.' : 'Preview only.'}</strong> {media.serviceError || 'YouTube extraction needs an authorized media service, which is not connected. No download request has been sent.'}</p>
+                <div className="service-note-copy">
+                  <p><strong>{media.serviceError ? 'Download service unavailable.' : 'Preview only.'}</strong> {media.serviceError || 'YouTube extraction needs an authorized media service, which is not connected. No download request has been sent.'}</p>
+                  <a
+                    className="reference-fallback"
+                    href={REFERENCE_DOWNLOADER_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleReferenceCopy}
+                    aria-label="Open the external SSYouTube reference downloader in a new tab"
+                  >
+                    Open reference downloader <ExternalLink size={14} />
+                  </a>
+                  <small className="reference-fallback-note">External website. Savr does not control its availability, advertising, or terms.</small>
+                </div>
               </div>
             )}
             {media.metadataUnavailable && media.kind === 'youtube' && (

@@ -50,7 +50,7 @@ export const faqs = [
   },
   {
     question: 'Can I download YouTube videos here right now?',
-    answer: 'Savr supports public single videos up to 15 minutes and 1080p. Availability depends on YouTube accepting the service’s authorized request; verification, IP restrictions, or source-side blocks can still prevent a download. Savr shows a clear error instead of pretending a file succeeded. Direct media URLs and the included local sample do not use the YouTube service.',
+    answer: 'Savr supports public single videos up to 15 minutes and 1080p. Availability depends on YouTube accepting the service’s authorized request; verification, IP restrictions, or source-side blocks can still prevent a download. Savr shows a clear error instead of pretending a file succeeded. When the service is blocked, you can open the independent SSYouTube reference in a new tab; its own availability, advertising, and terms apply. Direct media URLs and the included local sample do not use the YouTube service.',
   },
   {
     question: 'Can I use it on my phone?',

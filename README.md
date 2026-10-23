@@ -67,6 +67,8 @@ Service boundaries:
 - Private, unlisted, paid, and members-only videos remain rejected, including when an authorized session is configured.
 - YouTube verification, geographic restrictions, and source-side blocking can still prevent a download; these produce explicit errors.
 
+When the YouTube service fails, the interface offers an **external reference fallback** to `https://ssyou.online/en1401Yd/`. It copies the canonical video URL for pasting and opens the independent site in a new tab with `noopener`/`noreferrer`. Savr does not proxy the reference's origin-protected PHP backend or reproduce its advertising redirect. The third party's availability, advertising, and terms apply; this fallback is not evidence that Savr's own extraction succeeded.
+
 ### Optional authorized YouTube session
 
 If YouTube rejects server requests, the site operator can authorize public-video extraction with their own YouTube session. Users are never asked for account credentials.

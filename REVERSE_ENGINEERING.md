@@ -53,3 +53,15 @@ Therefore the following remain unknown:
 ## Follow-up media service
 
 After the initial deployment, the user supplied a screenshot showing that public metadata worked while the download action remained unavailable. The preview-only boundary was therefore replaced with Savr's own Python media service using `yt-dlp` and FFmpeg. It exposes real per-video MP4/MP3 formats and prepares downloads on demand, with single-video, duration, resolution, and file-size limits. The deployed extractor includes matching EJS challenge scripts and a pinned Deno runtime; these are generated deployment assets, not committed binaries. An optional operator-authorized YouTube session can be supplied exclusively through the `YOUTUBE_COOKIES_BASE64` Vercel secret, with temporary-file cleanup and public-only validation; users are never asked for account credentials. These are new implementation choices, not newly observed evidence about the reference site's backend.
+
+## Reference-service follow-up
+
+After the live YouTube request continued to fail, the user asked for new reference-based work. Static WordPress REST retrieval established these additional facts without another unchanged REA browser capture:
+
+- The supplied page is WordPress page 232. Its form uses `POST` with a single `videoURL` field and submits to `/yt-video-detail/`.
+- That destination is WordPress page 716 and uses the `yt-video-details.php` template. Its empty GET response says the link is incorrect or broken.
+- A GET probe containing the requested public video's `videoURL` returned `Invalid request origin.` This is evidence of origin enforcement, not a successful form submission or proof of the reference's response schema.
+- The page's submit function also opens an unrelated advertising URL before submitting. Savr does not reproduce that redirect.
+- A similarly named public Apify actor was checked as a secondary reference. It is deprecated, contains a generic crawler template with an empty entry point, and reported no successful public runs in the available 30-day statistics. It is not a usable downloader API.
+
+No successful reference POST, format response, provider response, or target-video download was observed. The reference's private PHP backend, provider, and actual 1080p behavior remain unverified. To avoid inventing an API contract or bypassing origin controls, Savr offers only an explicit external link to the supplied reference when its own service fails. The link copies the canonical YouTube URL for user-initiated pasting and opens with `noopener`/`noreferrer`; it does not represent a successful Savr extraction.
