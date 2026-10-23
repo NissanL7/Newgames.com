@@ -1,321 +1,254 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CloudOff, Compass } from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
-import { PageTransition } from './components/Motion.jsx';
-import { channels, defaultUser, notifications, videos as catalogVideos } from './data.js';
-import { deleteVideoBlob, getVideoBlob, saveVideoBlob, useLocalStorage } from './lib/storage.js';
-import { navigate, useRoute } from './lib/routing.js';
-import { BottomNav, DesktopSidebar, Header } from './components/Navigation.jsx';
-import AppSheets from './components/AppSheets.jsx';
-import { EmptyState, Toast } from './components/UI.jsx';
-import HomePage from './pages/HomePage.jsx';
-import SearchPage from './pages/SearchPage.jsx';
-import WatchPage from './pages/WatchPage.jsx';
-import ShortsPage from './pages/ShortsPage.jsx';
-import SubscriptionsPage from './pages/SubscriptionsPage.jsx';
-import LibraryPage from './pages/LibraryPage.jsx';
-import CollectionPage from './pages/CollectionPage.jsx';
-import ChannelPage from './pages/ChannelPage.jsx';
-import UploadPage from './pages/UploadPage.jsx';
+import { useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import {
+  ArrowDownToLine, ArrowRight, BadgeCheck, Check, ClipboardPaste,
+  FileAudio, FileVideo, Gauge, Laptop, Link2, Music2, ShieldCheck,
+  Smartphone, Sparkles, Video, Zap,
+} from 'lucide-react';
+import Downloader from './components/Downloader';
+import Faq from './components/Faq';
+import Logo from './components/Logo';
+import { formatOptions, steps } from './data';
 
-const toggleInList = (list, id) => list.includes(id) ? list.filter((item) => item !== id) : [id, ...list];
+const reveal = {
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.18 },
+  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+};
+
+function FormatShowcase() {
+  const [active, setActive] = useState('mp4');
+  const content = formatOptions[active];
+  const reduceMotion = useReducedMotion();
+  return (
+    <div className="format-showcase">
+      <div className="format-tabs" role="tablist" aria-label="Explore media formats">
+        {Object.entries(formatOptions).map(([id, item]) => (
+          <button
+            key={id}
+            id={`format-tab-${id}`}
+            type="button"
+            role="tab"
+            aria-selected={active === id}
+            aria-controls="format-panel"
+            className={active === id ? 'active' : ''}
+            onClick={() => setActive(id)}
+          >
+            {id === 'mp4' ? <Video size={18} /> : <Music2 size={18} />}
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <motion.div
+        key={active}
+        id="format-panel"
+        className="format-panel"
+        role="tabpanel"
+        aria-labelledby={`format-tab-${active}`}
+        initial={reduceMotion ? false : { opacity: 0, x: 14 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.3 }}
+      >
+        <div className="format-panel-heading">
+          <span>{active === 'mp4' ? 'VIDEO FORMAT' : 'AUDIO FORMAT'}</span>
+          <h3>{content.title}</h3>
+          <p>{content.text}</p>
+        </div>
+        <div className="quality-list">
+          {content.options.map((item, index) => (
+            <motion.div
+              key={item.name}
+              className="quality-row"
+              initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: reduceMotion ? 0 : index * 0.05 }}
+            >
+              <span className="quality-icon">{active === 'mp4' ? <FileVideo size={20} /> : <FileAudio size={20} />}</span>
+              <div><strong>{item.name}</strong><small>{item.detail}</small></div>
+              <span className="quality-tag">{item.tag}</span>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 export default function App() {
-  const route = useRoute();
-  const [storedUser, setUser] = useLocalStorage('mytube-user-v1', defaultUser);
-  const [uploads, setUploads] = useLocalStorage('mytube-uploads-v1', []);
-  const [sheet, setSheet] = useState(null);
-  const [toast, setToast] = useState('');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mediaVersion, setMediaVersion] = useState(0);
-  const [online, setOnline] = useState(navigator.onLine);
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const mediaUrls = useRef(new Map());
-
-  const user = useMemo(() => ({
-    ...defaultUser,
-    ...storedUser,
-    settings: { ...defaultUser.settings, ...(storedUser.settings || {}) },
-  }), [storedUser]);
-
-  const channelsById = useMemo(() => Object.fromEntries(channels.map((channel) => [channel.id, channel])), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const hydrate = async () => {
-      for (const video of uploads) {
-        if (mediaUrls.current.has(video.id)) continue;
-        try {
-          const blob = await getVideoBlob(video.id);
-          if (blob && !cancelled) mediaUrls.current.set(video.id, URL.createObjectURL(blob));
-        } catch {
-          // Metadata remains visible with an explicit unavailable-media state.
-        }
-      }
-      if (!cancelled) setMediaVersion((version) => version + 1);
-    };
-    if (uploads.length) hydrate();
-    return () => { cancelled = true; };
-  }, [uploads]);
-
-  useEffect(() => () => {
-    mediaUrls.current.forEach((url) => URL.revokeObjectURL(url));
-  }, []);
-
-  const uploadVideos = useMemo(() => uploads.map((video) => ({
-    ...video,
-    local: true,
-    src: mediaUrls.current.get(video.id) || '',
-    channelId: 'you',
-    likes: video.likes || 0,
-    views: video.views || 0,
-  })), [mediaVersion, uploads]); // eslint-disable-line react-hooks/exhaustive-deps
-  const allVideos = useMemo(() => [...uploadVideos, ...catalogVideos], [uploadVideos]);
-  const videosById = useMemo(() => Object.fromEntries(allVideos.map((video) => [video.id, video])), [allVideos]);
-
-  const showToast = useCallback((message) => setToast(message), []);
-  const closeSheet = useCallback(() => setSheet(null), []);
-  const goBack = useCallback(() => {
-    if (window.history.length > 1) window.history.back();
-    else navigate('home');
-  }, []);
-
-  const actions = useMemo(() => ({
-    toggleLike(id) {
-      setUser((previous) => ({ ...previous, liked: toggleInList(previous.liked, id), disliked: previous.disliked.filter((item) => item !== id) }));
-    },
-    toggleDislike(id) {
-      setUser((previous) => ({ ...previous, disliked: toggleInList(previous.disliked, id), liked: previous.liked.filter((item) => item !== id) }));
-    },
-    toggleSubscription(id) {
-      setUser((previous) => ({ ...previous, subscribed: toggleInList(previous.subscribed, id) }));
-    },
-    setNotificationPref(id, value) {
-      setUser((previous) => ({ ...previous, notificationPrefs: { ...previous.notificationPrefs, [id]: value } }));
-    },
-    toggleWatchLater(id) {
-      setUser((previous) => ({ ...previous, watchLater: toggleInList(previous.watchLater, id) }));
-    },
-    notInterested(id) {
-      setUser((previous) => ({ ...previous, notInterested: previous.notInterested.includes(id) ? previous.notInterested : [...previous.notInterested, id] }));
-    },
-    resetNotInterested() {
-      setUser((previous) => ({ ...previous, notInterested: [] }));
-    },
-    recordHistory(id) {
-      setUser((previous) => {
-        const existing = previous.history.find((entry) => entry.id === id);
-        const entry = { id, viewedAt: new Date().toISOString(), progress: existing?.progress || 0, duration: existing?.duration || 0 };
-        return { ...previous, history: [entry, ...previous.history.filter((item) => item.id !== id)].slice(0, 60) };
-      });
-    },
-    updateHistoryProgress(id, progress, duration) {
-      if (!Number.isFinite(progress)) return;
-      setUser((previous) => ({
-        ...previous,
-        history: previous.history.map((entry) => entry.id === id ? { ...entry, progress, duration: Number.isFinite(duration) ? duration : entry.duration } : entry),
-      }));
-    },
-    clearHistory() {
-      setUser((previous) => ({ ...previous, history: [] }));
-    },
-    addComment(videoId, text) {
-      const comment = {
-        id: `local-comment-${Date.now()}`,
-        author: 'Alex Viewer',
-        handle: '@alexviewer',
-        color: '#7c3aed',
-        text,
-        likes: 0,
-        createdAt: 'Just now',
-        createdAtDate: new Date().toISOString(),
-        local: true,
-      };
-      setUser((previous) => ({ ...previous, comments: { ...previous.comments, [videoId]: [comment, ...(previous.comments[videoId] || [])] } }));
-    },
-    deleteComment(videoId, commentId) {
-      setUser((previous) => ({ ...previous, comments: { ...previous.comments, [videoId]: (previous.comments[videoId] || []).filter((comment) => comment.id !== commentId) } }));
-    },
-    toggleCommentLike(id) {
-      setUser((previous) => ({ ...previous, likedComments: toggleInList(previous.likedComments, id), dislikedComments: previous.dislikedComments.filter((item) => item !== id) }));
-    },
-    toggleCommentDislike(id) {
-      setUser((previous) => ({ ...previous, dislikedComments: toggleInList(previous.dislikedComments, id), likedComments: previous.likedComments.filter((item) => item !== id) }));
-    },
-    addRecentSearch(query) {
-      setUser((previous) => ({ ...previous, recentSearches: [query, ...previous.recentSearches.filter((item) => item.toLowerCase() !== query.toLowerCase())].slice(0, 8) }));
-    },
-    clearRecentSearches() {
-      setUser((previous) => ({ ...previous, recentSearches: [] }));
-    },
-    createPlaylist(name, videoId) {
-      const id = `playlist-${Date.now().toString(36)}`;
-      setUser((previous) => ({ ...previous, playlists: [{ id, name, videoIds: videoId ? [videoId] : [], createdAt: new Date().toISOString() }, ...previous.playlists] }));
-      return id;
-    },
-    togglePlaylistVideo(playlistId, videoId) {
-      setUser((previous) => ({ ...previous, playlists: previous.playlists.map((playlist) => playlist.id === playlistId ? { ...playlist, videoIds: toggleInList(playlist.videoIds, videoId) } : playlist) }));
-    },
-    markNotificationRead(id) {
-      setUser((previous) => ({ ...previous, readNotifications: previous.readNotifications.includes(id) ? previous.readNotifications : [...previous.readNotifications, id] }));
-    },
-    markAllNotificationsRead() {
-      setUser((previous) => ({ ...previous, readNotifications: notifications.map((item) => item.id) }));
-    },
-    updateSettings(patch) {
-      setUser((previous) => ({ ...previous, settings: { ...defaultUser.settings, ...(previous.settings || {}), ...patch } }));
-    },
-    async deleteUpload(id) {
-      try { await deleteVideoBlob(id); } catch { /* Metadata can still be removed if media is already missing. */ }
-      const url = mediaUrls.current.get(id);
-      if (url) URL.revokeObjectURL(url);
-      mediaUrls.current.delete(id);
-      setUploads((previous) => previous.filter((video) => video.id !== id));
-      setUser((previous) => ({
-        ...previous,
-        liked: previous.liked.filter((item) => item !== id),
-        disliked: previous.disliked.filter((item) => item !== id),
-        watchLater: previous.watchLater.filter((item) => item !== id),
-        history: previous.history.filter((item) => item.id !== id),
-        playlists: previous.playlists.map((playlist) => ({ ...playlist, videoIds: playlist.videoIds.filter((item) => item !== id) })),
-      }));
-      setMediaVersion((version) => version + 1);
-    },
-  }), [setUploads, setUser]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => {
-      const dark = user.settings.theme === 'dark' || (user.settings.theme === 'system' && media.matches);
-      root.dataset.theme = dark ? 'dark' : 'light';
-      root.dataset.reduceMotion = user.settings.reduceMotion ? 'true' : 'false';
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#08090d' : '#f5f6fa');
-    };
-    apply();
-    media.addEventListener('change', apply);
-    return () => media.removeEventListener('change', apply);
-  }, [user.settings.reduceMotion, user.settings.theme]);
-
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    window.addEventListener('online', update);
-    window.addEventListener('offline', update);
-    return () => { window.removeEventListener('online', update); window.removeEventListener('offline', update); };
-  }, []);
-
-  useEffect(() => {
-    const capture = (event) => { event.preventDefault(); setInstallPrompt(event); };
-    window.addEventListener('beforeinstallprompt', capture);
-    return () => window.removeEventListener('beforeinstallprompt', capture);
-  }, []);
-
-  const handleShare = async (video, forceNative = false) => {
-    const url = `${window.location.origin}${window.location.pathname}#/watch/${encodeURIComponent(video.id)}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: video.title, text: `Watch “${video.title}” on MyTube`, url });
-        closeSheet();
-        return;
-      } catch (error) {
-        if (error.name === 'AbortError') return;
-      }
-    }
-    if (!forceNative) setSheet({ type: 'share', video });
+  const reduceMotion = useReducedMotion();
+  const focusDownloader = () => {
+    document.getElementById('downloader')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
+    setTimeout(() => document.getElementById('video-url')?.focus({ preventScroll: true }), reduceMotion ? 0 : 450);
   };
-
-  const handleDownload = (video) => {
-    if (!video.src) { showToast('The local media file is unavailable.'); return; }
-    const link = document.createElement('a');
-    link.href = video.src;
-    link.download = video.fileName || `${video.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.mp4`;
-    if (!video.local) { link.target = '_blank'; link.rel = 'noopener'; }
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    showToast(video.local ? 'Preparing your download' : 'Video source opened. Use your browser menu to save it.');
-  };
-
-  const handlePublish = async (file, metadata) => {
-    const id = `local-${Date.now().toString(36)}`;
-    await saveVideoBlob(id, file);
-    const video = {
-      id,
-      ...metadata,
-      channelId: 'you',
-      views: 0,
-      likes: 0,
-      publishedAt: new Date().toISOString(),
-      uploadedAt: 'Just now',
-      tags: [metadata.category.toLowerCase(), 'my creation'],
-      fileName: file.name,
-      mimeType: file.type,
-      local: true,
-    };
-    if (!video.thumbnail) video.thumbnail = '/assets/thumbnails/music-vlog.png';
-    mediaUrls.current.set(id, URL.createObjectURL(file));
-    setUploads((previous) => [video, ...previous]);
-    setMediaVersion((version) => version + 1);
-    closeSheet();
-    showToast(`${metadata.isShort ? 'Short' : 'Video'} published on this device`);
-    navigate(`watch/${id}`);
-  };
-
-  const installApp = async () => {
-    if (!installPrompt) return;
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    if (choice.outcome === 'accepted') { showToast('MyTube installed'); setInstallPrompt(null); closeSheet(); }
-  };
-
-  const openOptions = (video) => setSheet({ type: 'options', video });
-  const openSave = (video) => setSheet({ type: 'save', video });
-  const unreadCount = notifications.filter((item) => !user.readNotifications.includes(item.id)).length;
-  const fullScreenRoute = ['watch', 'search', 'shorts', 'upload'].includes(route.name);
-  const hideBottomNav = ['watch', 'search', 'upload'].includes(route.name);
-  const currentChannel = channelsById[route.id];
-
-  let page;
-  const shared = { videos: allVideos, channelsById, user, actions, navigate, onOptions: openOptions, onSave: openSave, showToast };
-  switch (route.name) {
-    case 'home': page = <HomePage {...shared} />; break;
-    case 'search': page = <SearchPage {...shared} channels={channels} route={route} goBack={goBack} />; break;
-    case 'watch': page = <WatchPage {...shared} video={videosById[route.id]} onSave={openSave} onShare={handleShare} onDownload={handleDownload} goBack={goBack} />; break;
-    case 'shorts': page = <ShortsPage {...shared} route={route} goBack={goBack} onShare={handleShare} onComments={(video) => setSheet({ type: 'comments', video })} />; break;
-    case 'subscriptions': page = <SubscriptionsPage {...shared} channels={channels} />; break;
-    case 'library': page = <LibraryPage videosById={videosById} uploads={uploadVideos} user={user} channel={channelsById.you} navigate={navigate} openSettings={() => setSheet({ type: 'settings' })} openCreatePlaylist={() => setSheet({ type: 'create-playlist' })} />; break;
-    case 'collection': page = <CollectionPage {...shared} type={route.id} uploads={uploadVideos} videosById={videosById} goBack={goBack} />; break;
-    case 'playlist': page = <CollectionPage {...shared} type={`playlist:${route.id}`} uploads={uploadVideos} videosById={videosById} goBack={goBack} />; break;
-    case 'channel': page = <ChannelPage {...shared} channel={currentChannel} videos={allVideos.filter((video) => video.channelId === route.id && (route.id === 'you' || video.visibility !== 'private'))} />; break;
-    case 'upload': page = <UploadPage onPublish={handlePublish} goBack={goBack} />; break;
-    default: page = <EmptyState icon={Compass} title="That page doesn’t exist" description="The link may be old or incomplete. Head back to your feed to keep watching." action="Back home" onAction={() => navigate('home')} />;
-  }
 
   return (
-    <div className={`app-shell ${!fullScreenRoute ? 'with-sidebar' : ''} ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''} route-${route.name}`}>
-      {!fullScreenRoute && <Header route={route} navigate={navigate} unreadCount={unreadCount} onNotifications={() => setSheet({ type: 'notifications' })} onMenu={() => setSidebarCollapsed((value) => !value)} channel={channelsById.you} />}
-      {!fullScreenRoute && <DesktopSidebar route={route} navigate={navigate} collapsed={sidebarCollapsed} onSettings={() => setSheet({ type: 'settings' })} />}
-      {!online && <div className="offline-banner"><CloudOff size={16} /> You’re offline. Local videos and saved screens still work.</div>}
-      <main className="app-main">
-        <AnimatePresence mode="wait" initial={false}>
-          <PageTransition key={route.path}>{page}</PageTransition>
-        </AnimatePresence>
-      </main>
-      {!hideBottomNav && <BottomNav route={route} navigate={navigate} />}
-      <AppSheets
-        sheet={sheet ? { ...sheet, videosById } : null}
-        setSheet={setSheet}
-        close={closeSheet}
-        user={user}
-        actions={actions}
-        channelsById={channelsById}
-        navigate={navigate}
-        showToast={showToast}
-        onShare={handleShare}
-        onDownload={handleDownload}
-        installApp={installPrompt ? installApp : null}
-      />
-      <Toast message={toast} onClose={() => setToast('')} />
-    </div>
+    <>
+      <a className="skip-link" href="#main">Skip to content</a>
+      <div className="site-shell" id="top">
+        <section className="hero" id="downloader">
+          <div className="hero-grid" aria-hidden="true" />
+          <motion.div
+            className="hero-orbit hero-orbit-one"
+            aria-hidden="true"
+            animate={reduceMotion ? undefined : { rotate: 360 }}
+            transition={{ duration: 55, repeat: Infinity, ease: 'linear' }}
+          />
+          <motion.div
+            className="hero-orbit hero-orbit-two"
+            aria-hidden="true"
+            animate={reduceMotion ? undefined : { rotate: -360 }}
+            transition={{ duration: 70, repeat: Infinity, ease: 'linear' }}
+          />
+          <header className="site-header page-width">
+            <Logo />
+            <nav aria-label="Main navigation">
+              <a href="#how-it-works">How it works</a>
+              <a href="#features">Features</a>
+              <a href="#faq">FAQ</a>
+            </nav>
+            <button className="header-cta" type="button" onClick={focusDownloader}>Paste a link <ArrowRight size={16} /></button>
+          </header>
+
+          <div className="hero-content page-width">
+            <motion.div
+              className="hero-eyebrow"
+              initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+            >
+              <Sparkles size={15} /> A SIMPLER WAY TO SAVE MEDIA
+            </motion.div>
+            <motion.h1
+              initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: reduceMotion ? 0 : 0.06, ease: [0.22, 1, 0.36, 1] }}
+            >
+              YouTube video<br /><span>downloader<span className="hero-period">.</span></span>
+            </motion.h1>
+            <motion.p
+              className="hero-description"
+              initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: reduceMotion ? 0 : 0.14 }}
+            >
+              Paste a link. Choose your file. Keep the moments that matter.<br className="desktop-break" /> Simple on every screen, with no account in the way.
+            </motion.p>
+            <motion.div
+              initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: reduceMotion ? 0 : 0.2 }}
+            >
+              <Downloader />
+            </motion.div>
+          </div>
+          <div className="hero-footnote page-width">
+            <span><Link2 size={15} /> YouTube & Shorts links</span>
+            <span><FileVideo size={15} /> Direct video & audio</span>
+            <span><Smartphone size={15} /> Mobile friendly</span>
+          </div>
+        </section>
+
+        <main id="main">
+          <section className="steps-section section-space page-width" id="how-it-works">
+            <motion.div className="section-heading split-heading" {...reveal}>
+              <div><span className="section-kicker">FROM LINK TO LOCAL</span><h2>Three steps.<br />That’s the whole thing.</h2></div>
+              <p>No complicated menus or mystery settings. Savr keeps the path from link to file short and understandable.</p>
+            </motion.div>
+            <div className="steps-grid">
+              {steps.map((step, index) => (
+                <motion.article
+                  className="step-card"
+                  key={step.number}
+                  {...reveal}
+                  transition={{ ...reveal.transition, delay: reduceMotion ? 0 : index * 0.08 }}
+                >
+                  <div className="step-card-top"><span>{step.number}</span>{index === 0 ? <ClipboardPaste /> : index === 1 ? <Gauge /> : <ArrowDownToLine />}</div>
+                  <h3>{step.title}</h3><p>{step.text}</p>
+                  <div className="step-line"><span /></div>
+                </motion.article>
+              ))}
+            </div>
+          </section>
+
+          <section className="feature-section section-space" id="features">
+            <div className="page-width">
+              <motion.div className="section-heading centered-heading" {...reveal}>
+                <span className="section-kicker">LESS FRICTION, MORE CONTROL</span>
+                <h2>Everything you need.<br />Nothing you don’t.</h2>
+                <p>A lightweight browser experience that respects your time, your screen, and your choices.</p>
+              </motion.div>
+              <div className="feature-bento">
+                <motion.article className="feature-card feature-card-large device-feature" {...reveal}>
+                  <div className="feature-copy">
+                    <span className="feature-icon"><Smartphone /></span>
+                    <h3>Made for the screen in your hand</h3>
+                    <p>Paste, preview, and save from your phone, tablet, laptop, or desktop. The layout adapts without hiding the important bits.</p>
+                    <div className="device-labels"><span><Smartphone size={15} /> Mobile</span><span><Laptop size={15} /> Desktop</span></div>
+                  </div>
+                  <div className="device-visual" aria-hidden="true">
+                    <div className="device-window">
+                      <div className="device-window-bar"><i /><i /><i /><span>savr / ready</span></div>
+                      <div className="device-preview"><img src="/assets/sample-poster.svg" alt="" /><span><BadgeCheck size={15} /> MEDIA FOUND</span></div>
+                      <div className="device-file-row"><FileVideo size={20} /><div><strong>creator-sample.webm</strong><small>Original quality</small></div><ArrowDownToLine size={19} /></div>
+                    </div>
+                  </div>
+                </motion.article>
+                <motion.article className="feature-card privacy-card" {...reveal} transition={{ ...reveal.transition, delay: reduceMotion ? 0 : 0.08 }}>
+                  <span className="feature-icon"><ShieldCheck /></span>
+                  <h3>No account. No personal profile.</h3>
+                  <p>You do not need to sign in, create an account, or hand over personal details to use the direct-link workflow.</p>
+                  <div className="privacy-check"><Check size={16} /> Direct files stay direct</div>
+                  <div className="privacy-check"><Check size={16} /> Clear backend limitations</div>
+                </motion.article>
+                <motion.article className="feature-card speed-card" {...reveal} transition={{ ...reveal.transition, delay: reduceMotion ? 0 : 0.12 }}>
+                  <span className="feature-icon"><Zap /></span>
+                  <h3>Quick by design</h3>
+                  <p>A focused interface, lightweight motion, and no unnecessary redirects between you and the available file.</p>
+                  <div className="speed-visual" aria-hidden="true"><span style={{ '--bar': '92%' }} /><span style={{ '--bar': '68%' }} /><span style={{ '--bar': '82%' }} /></div>
+                </motion.article>
+              </div>
+            </div>
+          </section>
+
+          <section className="formats-section section-space page-width" id="formats">
+            <motion.div className="section-heading split-heading" {...reveal}>
+              <div><span className="section-kicker">PICK YOUR FORMAT</span><h2>Watch the picture.<br />Or keep the sound.</h2></div>
+              <p>Explore the options the reconstructed workflow is designed to support. Availability always comes from the actual source or connected media service.</p>
+            </motion.div>
+            <motion.div {...reveal}><FormatShowcase /></motion.div>
+          </section>
+
+          <section className="faq-section section-space page-width" id="faq">
+            <motion.div className="faq-intro" {...reveal}>
+              <span className="section-kicker">GOOD TO KNOW</span>
+              <h2>Questions,<br />meet answers.</h2>
+              <p>Clear expectations make better downloads. Here is how the reconstruction works and where its boundaries are.</p>
+              <button type="button" onClick={focusDownloader}>Start with a link <ArrowRight size={17} /></button>
+            </motion.div>
+            <motion.div {...reveal} transition={{ ...reveal.transition, delay: reduceMotion ? 0 : 0.08 }}><Faq /></motion.div>
+          </section>
+
+          <section className="final-cta page-width">
+            <motion.div className="final-cta-inner" {...reveal}>
+              <div className="cta-spark" aria-hidden="true"><ArrowDownToLine /></div>
+              <span className="section-kicker">READY WHEN YOU ARE</span>
+              <h2>A good link is<br />all you need.</h2>
+              <p>Try the offline sample or paste a direct media link.</p>
+              <button type="button" onClick={focusDownloader}>Open downloader <ArrowRight size={19} /></button>
+            </motion.div>
+          </section>
+        </main>
+
+        <footer className="site-footer">
+          <div className="page-width footer-main">
+            <div><Logo /><p>A focused media-saving interface.<br />Original reconstruction, honest by design.</p></div>
+            <div className="footer-links"><strong>Explore</strong><a href="#how-it-works">How it works</a><a href="#features">Features</a><a href="#formats">Formats</a></div>
+            <div className="footer-links"><strong>Help</strong><a href="#faq">FAQ</a><a href="#downloader">Direct downloads</a><a href="#faq">Copyright guidance</a></div>
+          </div>
+          <div className="page-width footer-bottom"><span>© 2026 Savr</span><span>Not affiliated with YouTube or SSYouTube.</span><span>Built for responsible downloading.</span></div>
+        </footer>
+      </div>
+    </>
   );
 }

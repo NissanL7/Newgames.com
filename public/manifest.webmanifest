@@ -1,20 +1,14 @@
 {
-  "name": "MyTube — Watch what moves you",
-  "short_name": "MyTube",
-  "description": "A local-first mobile video app for watching, creating, and collecting videos.",
-  "start_url": "/#/home",
+  "name": "Savr — Simple Media Downloader",
+  "short_name": "Savr",
+  "description": "A focused, mobile-friendly interface for previewing media links and saving direct files.",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "any",
-  "background_color": "#08090d",
-  "theme_color": "#08090d",
-  "categories": ["entertainment", "video", "social"],
+  "background_color": "#0d0924",
+  "theme_color": "#0d0924",
   "icons": [
     { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ],
-  "shortcuts": [
-    { "name": "Search videos", "short_name": "Search", "url": "/#/search", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Create a video", "short_name": "Create", "url": "/#/upload", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

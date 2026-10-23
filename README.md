@@ -1,58 +1,67 @@
-# MyTube
+# Savr
 
-A mobile-first, installable video application built with React, Vite, and Motion. MyTube recreates the core everyday workflows of a mobile video platform with an original cinematic interface and a local-first personal profile.
+An original, responsive media-downloader interface reconstructed from the publicly observable SSYouTube workflow. Savr replaces the previous MyTube application in this repository.
 
-The interface uses a featured-video parallax hero, masked word reveals, staggered content entrances, shared-layout navigation indicators, animated statistics, layered ambient backgrounds, and responsive glass surfaces. Motion primarily uses compositor-friendly transforms and opacity, with static reduced-motion fallbacks.
+## Run
 
-## Features
-
-- Cinematic featured premiere with parallax, word reveals, and Watch Later actions
-- Home feed with animated topic filters, staggered video cards, and a Shorts shelf
-- Vertical, scroll-snap Shorts player with autoplay, mute, likes, comments, sharing, and subscriptions
-- Full video player with seeking, volume, playback speed, fullscreen, and picture-in-picture where supported
-- Search with live results, filters, recent searches, trending topics, and browser voice search
-- Channel pages, subscriptions, and per-channel notification preferences
-- Likes, dislikes, comments, watch history, playback progress, Watch Later, and custom playlists
-- Local video and Short uploads with generated thumbnails and IndexedDB media persistence
-- Share/copy links and source downloads
-- Light, dark, and system themes; data saver and reduced-motion settings
-- Responsive mobile/desktop layouts and an installable PWA app shell
-
-## Local-first behavior
-
-Personal activity is stored in this browser. Uploaded media is stored in IndexedDB and never sent to a remote server. The demo catalog uses openly hosted Google sample videos, so catalog playback requires an internet connection. Local uploads can play without one.
-
-MyTube is an independent demo and is not affiliated with YouTube. It does not provide YouTube account sign-in, cloud synchronization, remote recommendations, monetization, or publishing to YouTube. Those features require official Google/YouTube APIs, OAuth credentials, backend services, and their respective policies.
-
-## Run locally
-
-```bash
+```sh
 npm install
 npm run dev
 ```
 
-The Vite server binds to `0.0.0.0` and accepts preview hosts.
+Production check:
 
-## Production build
-
-```bash
+```sh
 npm run build
 npm run preview
 ```
 
-The production service worker caches same-origin application assets. Video streams and range requests are deliberately not cached.
+## What works
 
-## Project structure
+- YouTube, YouTube Shorts, youtu.be, and direct-media URL validation.
+- Public YouTube title/channel/thumbnail retrieval through YouTube oEmbed when the network permits it, with an explicit fallback when it does not.
+- Direct MP4, WebM, MOV, M4V, MP3, M4A, WAV, and OGG link handling.
+- Same-origin file downloads and external source handoff.
+- An original four-second WebM sample that works without a media backend.
+- Format/quality selection, clipboard paste/copy, clear errors, responsive results, and download notifications.
+- Interactive format explorer, animated FAQ accordion, mobile/desktop layouts, reduced-motion support, and an installable offline app shell.
 
-```text
-src/
-├── App.jsx                 # Routes and shared application state
-├── data.js                 # Demo catalog, channels, and default profile
-├── components/             # Navigation, player, cards, comments, sheets
-├── pages/                  # Home, watch, Shorts, search, channels, library, creator
-└── lib/                    # Routing, storage, and formatting helpers
-public/
-├── assets/                 # Bundled artwork and app icons
-├── manifest.webmanifest
-└── sw.js
+## YouTube download boundary
+
+No YouTube extraction, conversion, or third-party download service is configured. The interface never claims that a YouTube file downloaded when no file was supplied. YouTube results are labeled **Preview only** until an authorized media service is connected.
+
+To connect one, set `VITE_DOWNLOADER_API_URL` at build time. Savr sends:
+
+```json
+POST <VITE_DOWNLOADER_API_URL>
+{ "url": "https://www.youtube.com/watch?v=VIDEO_ID" }
 ```
+
+The endpoint must return JSON in this shape:
+
+```json
+{
+  "title": "Video title",
+  "author": "Channel name",
+  "thumbnail": "https://example.test/thumbnail.jpg",
+  "formats": [
+    {
+      "id": "mp4-720",
+      "format": "mp4",
+      "quality": "720p",
+      "url": "https://example.test/authorized-file.mp4",
+      "size": 12345678
+    }
+  ]
+}
+```
+
+Use only a service you are authorized to operate, and download only media you own or have permission to save. Respect copyright and source-platform terms.
+
+## Investigation
+
+See `REVERSE_ENGINEERING.md` for observed behavior, secondary references, runtime limitations, and reconstruction decisions. The target's private backend and current live download transactions were not available to this investigation.
+
+## Stack
+
+React 19, Vite 6, Motion, Lucide icons, and bundled Inter Variable. No runtime CSS framework or account system is required.

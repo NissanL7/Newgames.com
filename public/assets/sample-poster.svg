@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#241448"/><stop offset="0.55" stop-color="#5c2d62"/><stop offset="1" stop-color="#ff738c"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#2a2145"/><stop offset="1" stop-color="#0d0924"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="600" fill="url(#sky)"/>
+  <circle cx="720" cy="142" r="76" fill="#ffd6b0" opacity=".92"/>
+  <circle cx="720" cy="142" r="112" fill="none" stroke="#ffd6b0" stroke-opacity=".22" stroke-width="2"/>
+  <path d="M0 410 185 230l120 113 145-158 207 208 112-97 191 151v153H0Z" fill="#372750" opacity=".78"/>
+  <path d="M0 463 180 331l130 105 185-134 184 144 133-83 148 104v133H0Z" fill="url(#ground)"/>
+  <path d="M70 88h185" stroke="#ffbac8" stroke-width="3" stroke-linecap="round" opacity=".65"/>
+  <text x="70" y="126" fill="#fff" font-family="Arial, sans-serif" font-size="22" letter-spacing="7">A TINY MOTION STUDY</text>
+  <text x="68" y="522" fill="#fff" font-family="Arial, sans-serif" font-size="50" font-weight="700" letter-spacing="-2">Make it yours.</text>
+  <text x="72" y="557" fill="#c9bdd3" font-family="Arial, sans-serif" font-size="18" letter-spacing="2">SAVR ORIGINAL SAMPLE · 00:04</text>
+</svg>
