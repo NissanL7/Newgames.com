@@ -148,6 +148,12 @@ def media_options(overrides=None):
                 cookie_file.write(cookie_data)
             os.chmod(cookie_path, 0o600)
             settings['cookiefile'] = cookie_path
+            # Use yt-dlp's authenticated defaults. The anonymous visionos
+            # fallback does not support cookies; authenticated defaults also
+            # include the web client for account-backed public-video extraction.
+            settings['extractor_args'] = {
+                'youtube': {'player_client': ['default']},
+            }
         yield settings
     finally:
         if cookie_path:
