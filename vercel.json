@@ -4,6 +4,16 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/media.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**}"
+    },
+    "api/download.py": {
+      "maxDuration": 300,
+      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**}"
+    }
+  },
   "headers": [
     {
       "source": "/sw.js",

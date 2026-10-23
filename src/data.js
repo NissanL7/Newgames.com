@@ -32,7 +32,7 @@ export const formatOptions = {
   mp3: {
     label: 'MP3',
     title: 'Keep the sound, skip the screen',
-    text: 'Audio extraction is available only when a connected, authorized media service supplies an audio file.',
+    text: 'The media service extracts the available audio track and converts it to MP3 at your selected bitrate.',
     icon: 'audio',
     options: [
       { name: 'Studio quality', detail: '320 kbps · when supplied', tag: 'BEST' },
@@ -46,11 +46,11 @@ export const formatOptions = {
 export const faqs = [
   {
     question: 'How does the downloader work?',
-    answer: 'Paste a supported link above and select Get video. For direct media links, Savr prepares the original file for download. For YouTube links, it can display public title and channel details; actual downloading requires an authorized media service configured by the site operator.',
+    answer: 'Paste a supported link above and select Get video. For direct media links, Savr prepares the original file. For supported public YouTube videos, the media service returns real MP4 and MP3 options, prepares the requested file, and then saves it through your browser.',
   },
   {
     question: 'Can I download YouTube videos here right now?',
-    answer: 'This reconstruction does not include a YouTube extraction or conversion backend. It shows public metadata when available and never pretends a download succeeded. Direct media URLs and the included local sample work without that backend.',
+    answer: 'Yes, for supported public single videos up to 15 minutes and 1080p. YouTube may require verification or block some videos; Savr shows a clear error instead of pretending a download succeeded. Direct media URLs and the included local sample do not use the YouTube service.',
   },
   {
     question: 'Can I use it on my phone?',

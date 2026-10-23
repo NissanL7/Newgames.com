@@ -19,6 +19,7 @@ export default function Downloader() {
   const [quality, setQuality] = useState(initialQuality);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const inputRef = useRef(null);
@@ -43,6 +44,9 @@ export default function Downloader() {
   const selectedDownload = media?.formats.find((item) => (
     item.format === format && item.quality === quality
   ));
+  const downloadPercent = downloadProgress?.total
+    ? Math.min(100, Math.round((downloadProgress.received / downloadProgress.total) * 100))
+    : null;
 
   const selectMedia = (nextMedia) => {
     setMedia(nextMedia);
@@ -117,14 +121,16 @@ export default function Downloader() {
   const handleDownload = async () => {
     if (!media || !selectedDownload || downloading) return;
     setDownloading(true);
+    setDownloadProgress(null);
     setError('');
     try {
-      const message = await saveMedia(media, selectedDownload);
+      const message = await saveMedia(media, selectedDownload, setDownloadProgress);
       setNotice(message);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'The download could not be started.');
     } finally {
       setDownloading(false);
+      setDownloadProgress(null);
     }
   };
 
@@ -249,15 +255,30 @@ export default function Downloader() {
                 title={!selectedDownload ? 'An authorized media service is needed for this source' : undefined}
               >
                 {downloading ? <LoaderCircle className="spin" size={19} /> : <ArrowDownToLine size={19} />}
-                {downloading ? 'Preparing' : selectedDownload ? 'Download' : 'Unavailable'}
+                {downloading
+                  ? downloadPercent !== null ? `${downloadPercent}%` : 'Preparing'
+                  : selectedDownload ? 'Download' : 'Unavailable'}
                 {selectedDownload?.size && <small>{formatBytes(selectedDownload.size)}</small>}
               </button>
             </div>
 
+            {downloading && (
+              <div className="download-progress" role="status" aria-live="polite">
+                <div className={`progress-track ${downloadPercent === null ? 'indeterminate' : ''}`}>
+                  <span style={downloadPercent !== null ? { width: `${downloadPercent}%` } : undefined} />
+                </div>
+                <p>{downloadProgress
+                  ? downloadProgress.total
+                    ? `Saving ${formatBytes(downloadProgress.received)} of ${formatBytes(downloadProgress.total)}`
+                    : `Downloaded ${formatBytes(downloadProgress.received)} so far…`
+                  : 'The server is preparing your file. HD video and MP3 conversion can take a moment.'}</p>
+              </div>
+            )}
+
             {media.kind === 'youtube' && !media.serviceConnected && (
               <div className="service-note">
                 <Info size={18} />
-                <p><strong>Preview only.</strong> YouTube extraction needs an authorized media service, which is not connected to this reconstruction. No download request has been sent.</p>
+                <p><strong>{media.serviceError ? 'Download service unavailable.' : 'Preview only.'}</strong> {media.serviceError || 'YouTube extraction needs an authorized media service, which is not connected. No download request has been sent.'}</p>
               </div>
             )}
             {media.metadataUnavailable && media.kind === 'youtube' && (

@@ -2,7 +2,7 @@
 
 An original, responsive media-downloader interface reconstructed from the publicly observable SSYouTube workflow. Savr replaces the previous MyTube application in this repository.
 
-## Run
+## Run the frontend
 
 ```sh
 npm install
@@ -16,52 +16,67 @@ npm run build
 npm run preview
 ```
 
+Vercel also installs `requirements.txt` and runs the Python media functions. For local backend development, use the Vercel CLI with Python 3.12 available.
+
 ## What works
 
 - YouTube, YouTube Shorts, youtu.be, and direct-media URL validation.
-- Public YouTube title/channel/thumbnail retrieval through YouTube oEmbed when the network permits it, with an explicit fallback when it does not.
+- Server-side YouTube metadata and real per-video format discovery through `yt-dlp`.
+- MP4 downloads up to 1080p and MP3 audio conversion at 128, 192, or 320 kbps.
+- Server-side preparation and browser download progress with clear service errors.
 - Direct MP4, WebM, MOV, M4V, MP3, M4A, WAV, and OGG link handling.
-- Same-origin file downloads and external source handoff.
-- An original four-second WebM sample that works without a media backend.
-- Format/quality selection, clipboard paste/copy, clear errors, responsive results, and download notifications.
-- Interactive format explorer, animated FAQ accordion, mobile/desktop layouts, reduced-motion support, and an installable offline app shell.
+- An original four-second WebM sample that works without the media backend.
+- Clipboard paste/copy, responsive results, interactive format explorer, animated FAQs, reduced-motion support, and an installable offline app shell.
 
-## YouTube download boundary
+## Media service
 
-No YouTube extraction, conversion, or third-party download service is configured. The interface never claims that a YouTube file downloaded when no file was supplied. YouTube results are labeled **Preview only** until an authorized media service is connected.
-
-To connect one, set `VITE_DOWNLOADER_API_URL` at build time. Savr sends:
+The default metadata endpoint is `POST /api/media`:
 
 ```json
-POST <VITE_DOWNLOADER_API_URL>
 { "url": "https://www.youtube.com/watch?v=VIDEO_ID" }
 ```
 
-The endpoint must return JSON in this shape:
+It returns the public title, channel, thumbnail, duration, and only the formats available for that video:
 
 ```json
 {
   "title": "Video title",
   "author": "Channel name",
   "thumbnail": "https://example.test/thumbnail.jpg",
+  "duration": 210,
   "formats": [
     {
       "id": "mp4-720",
       "format": "mp4",
       "quality": "720p",
-      "url": "https://example.test/authorized-file.mp4",
-      "size": 12345678
+      "url": "/api/download?url=...&format=mp4&quality=720p",
+      "size": null
     }
   ]
 }
 ```
 
-Use only a service you are authorized to operate, and download only media you own or have permission to save. Respect copyright and source-platform terms.
+`GET /api/download` validates the request again, prepares the selected file with `yt-dlp` and FFmpeg, and streams it as an attachment. MP4 requests prioritize compatible H.264 video and M4A audio; MP3 requests convert the best available audio track.
+
+Service boundaries:
+
+- Single public YouTube videos and Shorts only; no playlists or live streams.
+- Maximum source duration: 15 minutes.
+- Maximum MP4 resolution: 1080p.
+- Maximum prepared file size: 350 MB.
+- No account credentials, cookies, or private-video access.
+- YouTube verification, geographic restrictions, and source-side blocking can still prevent a download; these produce explicit errors.
+
+An external compatible metadata service can optionally be used instead by setting `VITE_DOWNLOADER_API_URL` at build time.
+
+Use the service only for media you own, that is licensed for downloading, or that you otherwise have permission to save. Respect copyright and source-platform terms.
 
 ## Investigation
 
-See `REVERSE_ENGINEERING.md` for observed behavior, secondary references, runtime limitations, and reconstruction decisions. The target's private backend and current live download transactions were not available to this investigation.
+See `REVERSE_ENGINEERING.md` for the original target observations and limitations. The implemented backend is Savr's own service; it does not copy or route through the reference site's unknown backend.
 
 ## Stack
 
-React 19, Vite 6, Motion, Lucide icons, and bundled Inter Variable. No runtime CSS framework or account system is required.
+- Frontend: React 19, Vite 6, Motion, Lucide icons, bundled Inter Variable.
+- Media functions: Python 3.12, `yt-dlp`, and FFmpeg supplied by `imageio-ffmpeg`.
+- Deployment: static Vite assets plus Python Vercel Functions.

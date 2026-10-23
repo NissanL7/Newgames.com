@@ -1,4 +1,4 @@
-const CACHE_NAME = 'savr-shell-v1';
+const CACHE_NAME = 'savr-shell-v2';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -45,6 +45,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(

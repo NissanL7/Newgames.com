@@ -121,9 +121,9 @@ const requestServiceMedia = async (media, endpoint) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url: media.url }),
   });
-  if (!response.ok) throw new Error(`The media service returned an error (${response.status}).`);
-  const data = await response.json();
-  if (!Array.isArray(data.formats)) throw new Error('The media service returned an invalid format list.');
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.error || `The media service returned an error (${response.status}).`);
+  if (!data || !Array.isArray(data.formats)) throw new Error('The media service returned an invalid format list.');
   const formats = data.formats.filter((item) => (
     item && typeof item.url === 'string' && typeof item.format === 'string' && typeof item.quality === 'string'
   )).map((item, index) => ({
@@ -148,9 +148,16 @@ const requestServiceMedia = async (media, endpoint) => {
 export const prepareMedia = async (rawValue) => {
   const media = parseMediaLink(rawValue);
   if (media.kind === 'direct') return media;
-  const serviceEndpoint = import.meta.env.VITE_DOWNLOADER_API_URL?.trim();
-  if (serviceEndpoint) return requestServiceMedia(media, serviceEndpoint);
-  return fetchYouTubeMetadata(media);
+  const serviceEndpoint = import.meta.env.VITE_DOWNLOADER_API_URL?.trim() || '/api/media';
+  try {
+    return await requestServiceMedia(media, serviceEndpoint);
+  } catch (error) {
+    const fallback = await fetchYouTubeMetadata(media);
+    return {
+      ...fallback,
+      serviceError: error instanceof Error ? error.message : 'The media service is unavailable.',
+    };
+  }
 };
 
 export const availableQualities = (media, format) => {
@@ -182,7 +189,7 @@ const safeFileName = (title, extension) => {
   return `${base}.${extension.replace(/^\./, '')}`;
 };
 
-export const saveMedia = async (media, format) => {
+export const saveMedia = async (media, format, onProgress) => {
   if (!format?.url) throw new Error('This format is not available for download.');
   const url = new URL(format.url, window.location.href);
   const fileName = safeFileName(media.title, format.format || media.extension || 'media');
@@ -200,8 +207,31 @@ export const saveMedia = async (media, format) => {
   }
 
   const response = await fetch(url.href);
-  if (!response.ok) throw new Error(`The file could not be downloaded (${response.status}).`);
-  const blob = await response.blob();
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.error || `The file could not be downloaded (${response.status}).`);
+  }
+  const total = Number(response.headers.get('Content-Length')) || null;
+  let blob;
+  if (response.body) {
+    const reader = response.body.getReader();
+    const chunks = [];
+    let received = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.byteLength;
+      if (received > 350 * 1024 * 1024) {
+        await reader.cancel();
+        throw new Error('This file is too large for an in-browser download. Choose a lower quality.');
+      }
+      onProgress?.({ received, total });
+    }
+    blob = new Blob(chunks, { type: response.headers.get('Content-Type') || 'application/octet-stream' });
+  } else {
+    blob = await response.blob();
+  }
   const objectUrl = URL.createObjectURL(blob);
   anchor.href = objectUrl;
   document.body.appendChild(anchor);

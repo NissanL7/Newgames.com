@@ -146,6 +146,12 @@ svg { flex-shrink: 0; }
 .result-download:hover:not(:disabled) { background: #ff6a87; }
 .result-download:disabled { color: #8c8593; background: #e8e4ea; }
 .result-download small { font-size: 9px; font-weight: 550; opacity: 0.7; }
+.download-progress { margin-top: 16px; }
+.progress-track { overflow: hidden; height: 5px; border-radius: 99px; background: #ece8ef; }
+.progress-track > span { display: block; width: 35%; height: 100%; border-radius: inherit; background: var(--coral); transition: width 0.2s; }
+.progress-track.indeterminate > span { animation: download-indeterminate 1.35s ease-in-out infinite; }
+.download-progress p { margin: 8px 0 0; color: #746d7d; font-size: 10px; line-height: 1.5; }
+@keyframes download-indeterminate { 0% { transform: translateX(-110%); } 100% { transform: translateX(310%); } }
 .service-note { display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 12px 14px; border-radius: 10px; color: #6b4e21; background: #fff3dc; font-size: 11px; line-height: 1.55; }
 .service-note svg { margin-top: 1px; color: #a36d16; }
 .service-note p { margin: 0; }

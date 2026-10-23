@@ -40,7 +40,7 @@ Therefore the following remain unknown:
 - Actual available resolutions, file sizes, rate limits, and error behavior.
 - Whether its advertising, privacy, security, and unlimited-download claims are accurate.
 
-## Reconstruction decisions
+## Initial reconstruction decisions
 
 - Use an original brand, layout, code, and visual system rather than copying private or unobserved implementation.
 - Preserve the observable link → details → format/quality → download interaction model.
@@ -49,3 +49,7 @@ Therefore the following remain unknown:
 - Do not fabricate a YouTube download response. An optional `VITE_DOWNLOADER_API_URL` adapter is documented for an authorized media service; no service is configured by default.
 - Include a locally generated WebM sample so the complete direct-media workflow can be tested offline.
 - Clearly tell users to download only media they own or have permission to save.
+
+## Follow-up media service
+
+After the initial deployment, the user supplied a screenshot showing that public metadata worked while the download action remained unavailable. The preview-only boundary was therefore replaced with Savr's own Python media service using `yt-dlp` and FFmpeg. It exposes real per-video MP4/MP3 formats and prepares downloads on demand, with single-video, duration, resolution, and file-size limits. This is a new implementation choice, not newly observed evidence about the reference site's backend.
