@@ -11,6 +11,7 @@ import {
 import SectionHeader from '../components/SectionHeader.jsx';
 import { Avatar, EmptyState, IconButton } from '../components/UI.jsx';
 import { formatCount } from '../lib/utils.js';
+import { AnimatedNumber } from '../components/Motion.jsx';
 
 function LibraryLink({ icon: Icon, title, count, onClick, color, preview }) {
   return (
@@ -39,10 +40,10 @@ export default function LibraryPage({ videosById, uploads, user, channel, naviga
         <div className="profile-card-copy"><h2>{channel.name}</h2><p>{channel.handle} · {formatCount(uploads.length)} creation{uploads.length === 1 ? '' : 's'}</p><button onClick={() => navigate('channel/you')}>View your channel <ChevronRight size={15} /></button></div>
       </section>
       <div className="library-stats">
-        <button onClick={() => navigate('collection/history')}><strong>{historyVideos.length}</strong><span>Watched</span></button>
-        <button onClick={() => navigate('collection/liked')}><strong>{likedVideos.length}</strong><span>Liked</span></button>
-        <button onClick={() => navigate('channel/you')}><strong>{uploads.length}</strong><span>Created</span></button>
-        <button onClick={() => navigate('collection/watch-later')}><strong>{laterVideos.length}</strong><span>Saved</span></button>
+        <button onClick={() => navigate('collection/history')}><strong><AnimatedNumber value={historyVideos.length} /></strong><span>Watched</span></button>
+        <button onClick={() => navigate('collection/liked')}><strong><AnimatedNumber value={likedVideos.length} /></strong><span>Liked</span></button>
+        <button onClick={() => navigate('channel/you')}><strong><AnimatedNumber value={uploads.length} /></strong><span>Created</span></button>
+        <button onClick={() => navigate('collection/watch-later')}><strong><AnimatedNumber value={laterVideos.length} /></strong><span>Saved</span></button>
       </div>
 
       <section className="library-section">

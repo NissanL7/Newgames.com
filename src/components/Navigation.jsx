@@ -14,6 +14,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { Avatar, IconButton, Logo } from './UI.jsx';
+import { LayoutGroup, motion } from 'motion/react';
 import { cx } from '../lib/utils.js';
 
 export function Header({ route, navigate, unreadCount, onNotifications, onMenu, channel }) {
@@ -52,26 +53,29 @@ const mainItems = [
   { id: 'library', label: 'You', icon: Library },
 ];
 
+function BottomNavItem({ id, label, icon: Icon, route, navigate }) {
+  const active = route.name === id || (id === 'library' && ['collection', 'playlist'].includes(route.name));
+  return (
+    <button className={cx(active && 'active')} onClick={() => navigate(id)}>
+      {active && <motion.span className="bottom-active-pill" layoutId="bottom-navigation-active" transition={{ type: 'spring', stiffness: 430, damping: 34 }} />}
+      <span className="bottom-nav-icon"><Icon size={21} fill={active && id === 'home' ? 'currentColor' : 'none'} /></span>
+      <span className="bottom-nav-label">{label}</span>
+    </button>
+  );
+}
+
 export function BottomNav({ route, navigate }) {
   return (
-    <nav className="bottom-nav" aria-label="Main navigation">
-      {mainItems.slice(0, 2).map(({ id, label, icon: Icon }) => (
-        <button key={id} className={cx(route.name === id && 'active')} onClick={() => navigate(id)}>
-          <Icon size={22} fill={route.name === id && id === 'home' ? 'currentColor' : 'none'} />
-          <span>{label}</span>
+    <LayoutGroup id="bottom-navigation">
+      <nav className="bottom-nav" aria-label="Main navigation">
+        {mainItems.slice(0, 2).map((item) => <BottomNavItem key={item.id} {...item} route={route} navigate={navigate} />)}
+        <button className="create-nav" onClick={() => navigate('upload')} aria-label="Create or upload a video">
+          <span><Plus size={26} /></span>
+          <small>Create</small>
         </button>
-      ))}
-      <button className="create-nav" onClick={() => navigate('upload')} aria-label="Create or upload a video">
-        <span><Plus size={28} /></span>
-        <small>Create</small>
-      </button>
-      {mainItems.slice(2).map(({ id, label, icon: Icon }) => (
-        <button key={id} className={cx((route.name === id || (id === 'library' && ['collection', 'playlist'].includes(route.name))) && 'active')} onClick={() => navigate(id)}>
-          <Icon size={22} />
-          <span>{label}</span>
-        </button>
-      ))}
-    </nav>
+        {mainItems.slice(2).map((item) => <BottomNavItem key={item.id} {...item} route={route} navigate={navigate} />)}
+      </nav>
+    </LayoutGroup>
   );
 }
 

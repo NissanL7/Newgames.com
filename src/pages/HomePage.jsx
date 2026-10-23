@@ -1,11 +1,14 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { categories } from '../data.js';
+import { motion } from 'motion/react';
 import VideoCard, { ShortsShelf } from '../components/VideoCard.jsx';
+import HomeHero from '../components/HomeHero.jsx';
+import { AmbientBackground } from '../components/Motion.jsx';
 import { EmptyState } from '../components/UI.jsx';
 import { SearchX } from 'lucide-react';
 import { cx } from '../lib/utils.js';
 
-export default function HomePage({ videos, channelsById, user, navigate, onOptions }) {
+export default function HomePage({ videos, channelsById, user, navigate, onOptions, onSave }) {
   const [category, setCategory] = useState('All');
   const [shelfAfter, setShelfAfter] = useState(2);
   useEffect(() => {
@@ -19,9 +22,12 @@ export default function HomePage({ videos, channelsById, user, navigate, onOptio
     && video.visibility !== 'private'
     && (category === 'All' || video.category === category)
   )), [category, user.notInterested, videos]);
+  const featured = category === 'All' ? visible.find((video) => video.featured) : null;
 
   return (
     <div className="home-page">
+      {featured && <AmbientBackground />}
+      {featured && <HomeHero video={featured} channel={channelsById[featured.channelId]} navigate={navigate} onSave={onSave} saved={user.watchLater.includes(featured.id)} />}
       <div className="category-bar" role="tablist" aria-label="Video topics">
         {categories.map((item) => (
           <button
@@ -31,13 +37,14 @@ export default function HomePage({ videos, channelsById, user, navigate, onOptio
             className={cx('category-chip', category === item && 'active')}
             onClick={() => setCategory(item)}
           >
-            {item}
+            {category === item && <motion.span className="category-active-pill" layoutId="home-category-pill" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+            <span className="category-label">{item}</span>
           </button>
         ))}
       </div>
       <div className="page-content home-content">
         <div className="feed-title">
-          <h1>{category === 'All' ? 'Recommended for you' : `${category} picks`}</h1>
+          <h1>{category === 'All' ? 'Fresh for you' : `${category} picks`}</h1>
           <span>{visible.length} videos</span>
         </div>
         {visible.length === 0 ? (
@@ -57,6 +64,7 @@ export default function HomePage({ videos, channelsById, user, navigate, onOptio
                   channel={channelsById[video.channelId]}
                   navigate={navigate}
                   onOptions={onOptions}
+                  index={index}
                 />
                 {index + 1 === shelfAfter && category === 'All' && (
                   <ShortsShelf videos={videos} channelsById={channelsById} navigate={navigate} />

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CloudOff, Compass } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
+import { PageTransition } from './components/Motion.jsx';
 import { channels, defaultUser, notifications, videos as catalogVideos } from './data.js';
 import { deleteVideoBlob, getVideoBlob, saveVideoBlob, useLocalStorage } from './lib/storage.js';
 import { navigate, useRoute } from './lib/routing.js';
@@ -188,7 +190,7 @@ export default function App() {
       const dark = user.settings.theme === 'dark' || (user.settings.theme === 'system' && media.matches);
       root.dataset.theme = dark ? 'dark' : 'light';
       root.dataset.reduceMotion = user.settings.reduceMotion ? 'true' : 'false';
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0f0f0f' : '#ffffff');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#08090d' : '#f5f6fa');
     };
     apply();
     media.addEventListener('change', apply);
@@ -274,7 +276,7 @@ export default function App() {
   const currentChannel = channelsById[route.id];
 
   let page;
-  const shared = { videos: allVideos, channelsById, user, actions, navigate, onOptions: openOptions, showToast };
+  const shared = { videos: allVideos, channelsById, user, actions, navigate, onOptions: openOptions, onSave: openSave, showToast };
   switch (route.name) {
     case 'home': page = <HomePage {...shared} />; break;
     case 'search': page = <SearchPage {...shared} channels={channels} route={route} goBack={goBack} />; break;
@@ -294,7 +296,11 @@ export default function App() {
       {!fullScreenRoute && <Header route={route} navigate={navigate} unreadCount={unreadCount} onNotifications={() => setSheet({ type: 'notifications' })} onMenu={() => setSidebarCollapsed((value) => !value)} channel={channelsById.you} />}
       {!fullScreenRoute && <DesktopSidebar route={route} navigate={navigate} collapsed={sidebarCollapsed} onSettings={() => setSheet({ type: 'settings' })} />}
       {!online && <div className="offline-banner"><CloudOff size={16} /> You’re offline. Local videos and saved screens still work.</div>}
-      <main className="app-main">{page}</main>
+      <main className="app-main">
+        <AnimatePresence mode="wait" initial={false}>
+          <PageTransition key={route.path}>{page}</PageTransition>
+        </AnimatePresence>
+      </main>
       {!hideBottomNav && <BottomNav route={route} navigate={navigate} />}
       <AppSheets
         sheet={sheet ? { ...sheet, videosById } : null}

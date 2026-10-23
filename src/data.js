@@ -72,7 +72,6 @@ export const videos = [
     likes: 412000,
     description: 'Big Buck Bunny is the first open movie from the Blender Institute. Follow a good-natured rabbit as three pesky rodents push him a little too far. This independently produced animated comedy is presented here as part of the open-movie demo collection.',
     tags: ['animation', 'open movie', 'comedy', 'blender'],
-    featured: true,
   },
   {
     id: 'sintel',
@@ -103,6 +102,7 @@ export const videos = [
     likes: 209000,
     description: 'Forty years after an awkward breakup, a group of scientists and warriors gathers in Amsterdam to save the world from robots. A live-action and visual-effects open film with a playful science-fiction premise.',
     tags: ['science fiction', 'short film', 'vfx', 'amsterdam'],
+    featured: true,
   },
   {
     id: 'elephants-dream',
@@ -283,7 +283,7 @@ export const defaultUser = {
   readNotifications: [],
   notInterested: [],
   settings: {
-    theme: 'light',
+    theme: 'dark',
     autoplayShorts: true,
     dataSaver: false,
     reduceMotion: false,

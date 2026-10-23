@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { BadgeCheck, Play, X } from 'lucide-react';
 import { cx, initials } from '../lib/utils.js';
+import { motion, useReducedMotion } from 'motion/react';
+import { premiumEase } from './Motion.jsx';
 
 export function Logo({ compact = false, onClick }) {
   const content = (
@@ -60,6 +62,7 @@ export function Toggle({ checked, onChange, label, description }) {
 }
 
 export function Sheet({ title, subtitle, onClose, children, className = '' }) {
+  const reduced = useReducedMotion();
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -73,8 +76,16 @@ export function Sheet({ title, subtitle, onClose, children, className = '' }) {
 
   return (
     <div className="sheet-layer" role="presentation">
-      <button className="sheet-backdrop" onClick={onClose} aria-label="Close dialog" />
-      <section className={cx('sheet', className)} role="dialog" aria-modal="true" aria-label={title || 'Dialog'}>
+      <motion.button className="sheet-backdrop" onClick={onClose} aria-label="Close dialog" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} />
+      <motion.section
+        className={cx('sheet', className)}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title || 'Dialog'}
+        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 32, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: reduced ? 0.15 : 0.3, ease: premiumEase }}
+      >
         <div className="sheet-handle" aria-hidden="true" />
         {(title || onClose) && (
           <header className="sheet-header">
@@ -86,7 +97,7 @@ export function Sheet({ title, subtitle, onClose, children, className = '' }) {
           </header>
         )}
         <div className="sheet-content">{children}</div>
-      </section>
+      </motion.section>
     </div>
   );
 }

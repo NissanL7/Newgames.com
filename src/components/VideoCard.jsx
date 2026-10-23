@@ -1,4 +1,6 @@
 import { CheckCircle2, MoreVertical, Play, Radio } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { premiumEase } from './Motion.jsx';
 import { Avatar, Verified } from './UI.jsx';
 import { cx, formatCount, formatDuration } from '../lib/utils.js';
 
@@ -18,9 +20,16 @@ export function Thumbnail({ video, className = '', children, onClick, label }) {
   ) : <div className={cx('thumbnail', className)}>{content}</div>;
 }
 
-export default function VideoCard({ video, channel, navigate, onOptions, compact = false, horizontal = false, progress }) {
+export default function VideoCard({ video, channel, navigate, onOptions, compact = false, horizontal = false, progress, index = 0 }) {
+  const reduced = useReducedMotion();
   return (
-    <article className={cx('video-card', compact && 'compact', horizontal && 'horizontal')}>
+    <motion.article
+      className={cx('video-card', compact && 'compact', horizontal && 'horizontal')}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 22, scale: 0.985 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.08 }}
+      transition={{ duration: reduced ? 0.15 : 0.5, delay: reduced ? 0 : Math.min(index, 5) * 0.045, ease: premiumEase }}
+    >
       <Thumbnail video={video} onClick={() => navigate(`watch/${video.id}`)}>
         {progress > 0 && <span className="watch-progress" style={{ width: `${Math.min(100, progress)}%` }} />}
       </Thumbnail>
@@ -44,7 +53,7 @@ export default function VideoCard({ video, channel, navigate, onOptions, compact
           <MoreVertical size={20} />
         </button>
       </div>
-    </article>
+    </motion.article>
   );
 }
 

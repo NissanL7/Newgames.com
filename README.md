@@ -1,10 +1,13 @@
 # MyTube
 
-A mobile-first, installable video application built with React and Vite. MyTube recreates the core everyday workflows of a mobile video platform with an original interface and a local-first personal profile.
+A mobile-first, installable video application built with React, Vite, and Motion. MyTube recreates the core everyday workflows of a mobile video platform with an original cinematic interface and a local-first personal profile.
+
+The interface uses a featured-video parallax hero, masked word reveals, staggered content entrances, shared-layout navigation indicators, animated statistics, layered ambient backgrounds, and responsive glass surfaces. Motion primarily uses compositor-friendly transforms and opacity, with static reduced-motion fallbacks.
 
 ## Features
 
-- Home feed with topic filters, video cards, and a Shorts shelf
+- Cinematic featured premiere with parallax, word reveals, and Watch Later actions
+- Home feed with animated topic filters, staggered video cards, and a Shorts shelf
 - Vertical, scroll-snap Shorts player with autoplay, mute, likes, comments, sharing, and subscriptions
 - Full video player with seeking, volume, playback speed, fullscreen, and picture-in-picture where supported
 - Search with live results, filters, recent searches, trending topics, and browser voice search
