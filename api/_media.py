@@ -1,7 +1,10 @@
+import base64
+import binascii
 import json
 import os
 import re
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import quote, urlparse
 
@@ -9,6 +12,7 @@ import yt_dlp
 
 MAX_DURATION_SECONDS = 15 * 60
 MAX_FILE_BYTES = 350 * 1024 * 1024
+MAX_AUTHORIZATION_BYTES = 128 * 1024
 MAX_HEIGHT = 1080
 ALLOWED_AUDIO_BITRATES = {'128', '192', '320'}
 VIDEO_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]{11}$')
@@ -114,9 +118,50 @@ def base_options():
     return options
 
 
+@contextmanager
+def media_options(overrides=None):
+    """Build extractor options without persisting an authorized session."""
+    settings = base_options()
+    if overrides:
+        settings.update(overrides)
+    cookie_path = None
+    try:
+        encoded = os.environ.get('YOUTUBE_COOKIES_BASE64')
+        if encoded:
+            compact = ''.join(encoded.split())
+            try:
+                if len(compact) > 4 * ((MAX_AUTHORIZATION_BYTES + 2) // 3) + 4:
+                    raise ValueError('Authorization payload is too large')
+                cookie_data = base64.b64decode(compact, validate=True)
+                if (
+                    not cookie_data
+                    or len(cookie_data) > MAX_AUTHORIZATION_BYTES
+                    or b'\x00' in cookie_data
+                    or b'youtube.com' not in cookie_data.lower()
+                ):
+                    raise ValueError('Authorization payload is not a YouTube cookie file')
+            except (binascii.Error, ValueError, UnicodeError) as error:
+                raise MediaError('The authorized media session is not configured correctly.', 500) from error
+
+            descriptor, cookie_path = tempfile.mkstemp(prefix='savr-youtube-', dir='/tmp')
+            with os.fdopen(descriptor, 'wb') as cookie_file:
+                cookie_file.write(cookie_data)
+            os.chmod(cookie_path, 0o600)
+            settings['cookiefile'] = cookie_path
+        yield settings
+    finally:
+        if cookie_path:
+            try:
+                os.unlink(cookie_path)
+            except FileNotFoundError:
+                pass
+
+
 def validate_info(info):
     if not info or info.get('_type') not in {None, 'video'}:
         raise MediaError('Playlists are not supported. Paste a single video link.')
+    if info.get('is_private') or info.get('availability') not in {None, 'public'}:
+        raise MediaError('Only public YouTube videos are supported.', 403)
     if info.get('is_live') or info.get('live_status') == 'is_live':
         raise MediaError('Live streams are not supported. Try the completed video instead.', 422)
     duration = info.get('duration')
@@ -127,13 +172,11 @@ def validate_info(info):
 
 
 def extract_info(video_url, options=None):
-    settings = base_options()
-    if options:
-        settings.update(options)
-    with yt_dlp.YoutubeDL(settings) as ydl:
-        info = ydl.extract_info(video_url, download=False)
-        validate_info(info)
-        return info
+    with media_options(options) as settings:
+        with yt_dlp.YoutubeDL(settings) as ydl:
+            info = ydl.extract_info(video_url, download=False)
+            validate_info(info)
+            return info
 
 
 def media_payload(info, video_url):
@@ -219,12 +262,11 @@ def prepare_download(video_url, output_format, quality):
     })
 
     try:
-        settings = base_options()
-        settings.update(options)
-        with yt_dlp.YoutubeDL(settings) as ydl:
-            info = ydl.extract_info(video_url, download=False)
-            validate_info(info)
-            ydl.process_ie_result(info, download=True)
+        with media_options(options) as settings:
+            with yt_dlp.YoutubeDL(settings) as ydl:
+                info = ydl.extract_info(video_url, download=False)
+                validate_info(info)
+                ydl.process_ie_result(info, download=True)
 
         desired_extension = f'.{output_format}'
         files = [path for path in Path(temp_dir).iterdir() if path.is_file() and path.suffix == desired_extension]

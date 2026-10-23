@@ -6,3 +6,7 @@ dist/
 image-search/
 api/runtime/
 __pycache__/
+.env
+.env.*
+cookies.txt
+youtube-cookies.txt

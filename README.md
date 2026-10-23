@@ -64,8 +64,24 @@ Service boundaries:
 - Maximum source duration: 15 minutes.
 - Maximum MP4 resolution: 1080p.
 - Maximum prepared file size: 350 MB.
-- No account credentials, cookies, or private-video access.
+- Private, unlisted, paid, and members-only videos remain rejected, including when an authorized session is configured.
 - YouTube verification, geographic restrictions, and source-side blocking can still prevent a download; these produce explicit errors.
+
+### Optional authorized YouTube session
+
+If YouTube rejects server requests, the site operator can authorize public-video extraction with their own YouTube session. Users are never asked for account credentials.
+
+1. From a session you are authorized to use, export **only YouTube cookies** in Netscape cookie-file format. Do not export or share an entire browser profile.
+2. Encode the file locally without sending it to anyone:
+
+   ```sh
+   python -c "import base64,pathlib; print(base64.b64encode(pathlib.Path('youtube-cookies.txt').read_bytes()).decode())"
+   ```
+
+3. In Vercel, open **Project Settings → Environment Variables** and create `YOUTUBE_COOKIES_BASE64` as a **Sensitive** value for **Production**. Paste the encoded value directly into Vercel, never into Git or chat.
+4. Redeploy the production project after saving the variable. Ask for a redeploy if someone else maintains the deployment; they do not need to read or retrieve the value.
+
+For each metadata or download request, the function decodes the value into a unique `/tmp` file with mode `0600`, passes it only to `yt-dlp`, and deletes it afterward. Cookie contents are not returned or intentionally logged. The public-video checks above still apply. Sessions can expire, and YouTube can continue to reject requests based on IP reputation or other source-side checks; configuring a session does not guarantee availability.
 
 An external compatible metadata service can optionally be used instead by setting `VITE_DOWNLOADER_API_URL` at build time.
 
