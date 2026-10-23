@@ -1,93 +1,55 @@
-# VoxelCraft - 3D Block Game
+# MyTube
 
-A Minecraft-inspired 3D voxel game built with Three.js and WebGL. Features procedural terrain generation, mobile joystick controls, inventory, crafting, multiple worlds, and more.
+A mobile-first, installable video application built with React and Vite. MyTube recreates the core everyday workflows of a mobile video platform with an original interface and a local-first personal profile.
 
 ## Features
 
-- **3D Voxel World** - Full 3D rendering with Three.js
-- **Procedural Terrain** - Perlin noise-based generation with multiple world types
-- **Chunk System** - Dynamic chunk loading/unloading for performance
-- **Mobile Controls** - Virtual joystick and touch buttons
-- **Inventory System** - 36-slot inventory with 9-slot hotbar
-- **Crafting System** - 20+ recipes for tools, materials, and building blocks
-- **24+ Block Types** - Grass, stone, ores, wood, sand, water, glass, brick, and more
-- **Sand & Gravel Physics** - Gravity-affected blocks
-- **Water Rendering** - Transparent water with proper rendering
-- **Multiple World Types** - Normal, Flat, Mountains, Desert, Snowy
-- **Save & Load** - Save progress to localStorage
-- **Day/Night Cycle** - Dynamic lighting and sky colors
-- **Debug Menu** - F3-style performance and position info
-- **Cave Generation** - 3D noise-based underground caves
-- **Tree Generation** - Procedural trees in forests
-- **Ore Distribution** - Realistic ore placement at different depths
+- Home feed with topic filters, video cards, and a Shorts shelf
+- Vertical, scroll-snap Shorts player with autoplay, mute, likes, comments, sharing, and subscriptions
+- Full video player with seeking, volume, playback speed, fullscreen, and picture-in-picture where supported
+- Search with live results, filters, recent searches, trending topics, and browser voice search
+- Channel pages, subscriptions, and per-channel notification preferences
+- Likes, dislikes, comments, watch history, playback progress, Watch Later, and custom playlists
+- Local video and Short uploads with generated thumbnails and IndexedDB media persistence
+- Share/copy links and source downloads
+- Light, dark, and system themes; data saver and reduced-motion settings
+- Responsive mobile/desktop layouts and an installable PWA app shell
 
-## Controls
+## Local-first behavior
 
-### Desktop
-| Key | Action |
-|-----|--------|
-| WASD | Move |
-| Mouse | Look around |
-| Space | Jump |
-| F | Toggle fly mode |
-| E | Inventory |
-| C | Crafting |
-| Q | Drop item |
-| 1-9 | Select hotbar slot |
-| Left Click | Break block |
-| Right Click | Place block |
-| Scroll | Change hotbar |
-| F3 | Debug menu |
-| Esc | Save & Quit |
+Personal activity is stored in this browser. Uploaded media is stored in IndexedDB and never sent to a remote server. The demo catalog uses openly hosted Google sample videos, so catalog playback requires an internet connection. Local uploads can play without one.
 
-### Mobile
-- **Left Joystick** - Movement
-- **Right Side Touch** - Look around
-- **Jump Button** - Jump/Swim up
-- **⛏️ Button** - Break block
-- **📦 Button** - Place block
-- **🎒 Button** - Inventory
+MyTube is an independent demo and is not affiliated with YouTube. It does not provide YouTube account sign-in, cloud synchronization, remote recommendations, monetization, or publishing to YouTube. Those features require official Google/YouTube APIs, OAuth credentials, backend services, and their respective policies.
 
-## How to Play
+## Run locally
 
-1. Open `index.html` in a modern web browser
-2. Click "Play" to start with default world, or "Worlds" to create/manage worlds
-3. Break blocks by clicking/hitting them
-4. Place blocks from your inventory
-5. Craft tools and materials in the crafting menu
-6. Explore different world types!
-
-## Tech Stack
-
-- **Three.js r128** - 3D rendering engine
-- **Vanilla JavaScript** - No framework dependencies
-- **Procedural Textures** - Canvas-based texture generation
-- **Perlin Noise** - Custom implementation for terrain
-
-## File Structure
-
+```bash
+npm install
+npm run dev
 ```
-├── index.html          # Main entry point
-├── css/
-│   └── style.css       # All styling
-├── js/
-│   ├── app.js          # Application entry, menus
-│   ├── main.js         # Game class and loop
-│   ├── data/
-│   │   ├── blocks.js   # Block/item definitions
-│   │   └── recipes.js  # Crafting recipes
-│   ├── engine/
-│   │   ├── noise.js    # Perlin noise generator
-│   │   ├── textures.js # Procedural texture atlas
-│   │   ├── chunk.js    # Chunk & world generation
-│   │   ├── player.js   # Player physics & input
-│   │   └── inventory.js # Inventory management
-│   ├── ui/
-│   │   ├── joystick.js # Mobile touch controls
-│   │   ├── hud.js      # HUD rendering
-│   │   ├── crafting.js # Crafting UI
-│   │   └── debug.js    # Debug menu
-│   └── systems/
-│       ├── save.js     # Save/load system
-│       └── worlds.js   # Multi-world manager
+
+The Vite server binds to `0.0.0.0` and accepts preview hosts.
+
+## Production build
+
+```bash
+npm run build
+npm run preview
+```
+
+The production service worker caches same-origin application assets. Video streams and range requests are deliberately not cached.
+
+## Project structure
+
+```text
+src/
+├── App.jsx                 # Routes and shared application state
+├── data.js                 # Demo catalog, channels, and default profile
+├── components/             # Navigation, player, cards, comments, sheets
+├── pages/                  # Home, watch, Shorts, search, channels, library, creator
+└── lib/                    # Routing, storage, and formatting helpers
+public/
+├── assets/                 # Bundled artwork and app icons
+├── manifest.webmanifest
+└── sw.js
 ```
