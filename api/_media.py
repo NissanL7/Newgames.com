@@ -98,6 +98,7 @@ def base_options():
         'noplaylist': True,
         'cachedir': False,
         'socket_timeout': 20,
+        'source_address': '0.0.0.0',
         'retries': 2,
         'fragment_retries': 2,
         'concurrent_fragment_downloads': 2,
