@@ -92,7 +92,7 @@ def send_media_error(handler, error):
 
 
 def base_options():
-    return {
+    options = {
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
@@ -104,6 +104,10 @@ def base_options():
         'nocheckcertificate': False,
         'no_color': True,
     }
+    deno_path = Path(__file__).resolve().parent / 'runtime' / 'deno'
+    if deno_path.is_file():
+        options['js_runtimes'] = {'deno': {'path': str(deno_path)}}
+    return options
 
 
 def validate_info(info):

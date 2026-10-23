@@ -7,10 +7,12 @@
   "functions": {
     "api/media.py": {
       "maxDuration": 60,
+      "includeFiles": "api/runtime/deno",
       "excludeFiles": "{node_modules/**,dist/**,public/**,src/**}"
     },
     "api/download.py": {
       "maxDuration": 300,
+      "includeFiles": "api/runtime/deno",
       "excludeFiles": "{node_modules/**,dist/**,public/**,src/**}"
     }
   },

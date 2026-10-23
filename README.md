@@ -16,7 +16,7 @@ npm run build
 npm run preview
 ```
 
-Vercel also installs `requirements.txt` and runs the Python media functions. For local backend development, use the Vercel CLI with Python 3.12 available.
+The build also stages the pinned Deno runtime for YouTube's JavaScript challenges; the binary is generated in `api/runtime/` and ignored by Git. Vercel installs `requirements.txt` and runs the Python media functions. For local backend development, use the Vercel CLI with Python 3.12 available.
 
 ## What works
 
@@ -78,5 +78,5 @@ See `REVERSE_ENGINEERING.md` for the original target observations and limitation
 ## Stack
 
 - Frontend: React 19, Vite 6, Motion, Lucide icons, bundled Inter Variable.
-- Media functions: Python 3.12, `yt-dlp`, and FFmpeg supplied by `imageio-ffmpeg`.
+- Media functions: Python 3.12, `yt-dlp` with matching EJS challenge scripts, Deno 2.9.6, and FFmpeg supplied by `imageio-ffmpeg`.
 - Deployment: static Vite assets plus Python Vercel Functions.
