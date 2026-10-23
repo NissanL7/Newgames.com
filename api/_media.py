@@ -103,6 +103,9 @@ def base_options():
         'concurrent_fragment_downloads': 2,
         'nocheckcertificate': False,
         'no_color': True,
+        'extractor_args': {
+            'youtube': {'player_client': ['web_embedded', 'tv_samsung', 'visionos']},
+        },
     }
     deno_path = Path(__file__).resolve().parent / 'runtime' / 'deno'
     if deno_path.is_file():
